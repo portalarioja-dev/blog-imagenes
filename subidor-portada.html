@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subidor de Portada — Blog</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --border-hover: #404040;
+    --text: #e8e8e8;
+    --muted: #666;
+    --accent: #4f9cf9;
+    --success: #4ade80;
+    --error: #f87171;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -.02em;
+    margin-bottom: 4px;
+  }
+
+  .header p {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-label .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .card-label .dot.green { background: var(--success); }
+
+  .field { margin-bottom: .75rem; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 5px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+  }
+
+  .field input::placeholder { color: var(--muted); }
+
+  .hint {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+
+  .drop-zone {
+    border: 1px dashed var(--border-hover);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.over {
+    border-color: var(--accent);
+    background: rgba(79,156,249,.05);
+  }
+
+  .drop-zone input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    font-size: 28px;
+    margin-bottom: .5rem;
+    display: block;
+  }
+
+  .drop-zone p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .drop-zone small {
+    font-size: 10px;
+    color: #444;
+    font-family: var(--mono);
+  }
+
+  #preview-wrap { display: none; margin-top: .75rem; }
+
+  #preview {
+    width: 100%;
+    border-radius: 6px;
+    max-height: 160px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  .file-meta {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 6px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: .65rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-hover);
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--sans);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: .75rem;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 500;
+  }
+
+  .btn.primary:hover { background: #70aefb; border-color: #70aefb; color: #000; }
+
+  .progress-wrap { display: none; margin-top: .75rem; }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    width: 0;
+    transition: width .4s;
+  }
+
+  .progress-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-align: center;
+  }
+
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: .65rem .85rem;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: .75rem;
+    font-family: var(--mono);
+  }
+
+  .alert.success { background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.25); color: var(--success); }
+  .alert.error { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25); color: var(--error); }
+
+  .url-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .65rem .85rem;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    word-break: break-all;
+    line-height: 1.6;
+    margin: .75rem 0 0;
+  }
+
+  .saved-pill {
+    font-size: 9px;
+    font-family: var(--mono);
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: rgba(74,222,128,.1);
+    color: var(--success);
+    border: 1px solid rgba(74,222,128,.2);
+  }
+
+  #url-section { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Subidor de portada</h1>
+    <p>blog widget · github storage</p>
+  </div>
+
+  <div class="card" id="config-card">
+    <div class="card-label">
+      <span class="dot"></span>
+      Configuración GitHub
+      <span id="saved-pill" class="saved-pill" style="display:none">✓ guardado</span>
+    </div>
+    <div class="field">
+      <label>Usuario GitHub</label>
+      <input type="text" id="gh-user" placeholder="tunombre">
+    </div>
+    <div class="field">
+      <label>Repositorio (público)</label>
+      <input type="text" id="gh-repo" placeholder="blog-imagenes">
+    </div>
+    <div class="field">
+      <label>Token de acceso personal</label>
+      <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
+      <p class="hint">Settings → Developer settings → Personal access tokens → Classic → scope: repo</p>
+    </div>
+    <button class="btn primary" onclick="saveConfig()">Guardar configuración</button>
+    <div id="config-result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">
+      <span class="dot green"></span>
+      Imagen del día
+    </div>
+    <div class="drop-zone" id="drop-zone">
+      <span class="drop-icon">↑</span>
+      <p>Arrastra la imagen aquí</p>
+      <small>o haz clic para seleccionar · JPG, PNG, WEBP</small>
+      <input type="file" id="file-input" accept="image/*" onchange="onFile(event)">
+    </div>
+    <div id="preview-wrap">
+      <img id="preview" alt="Vista previa">
+      <p class="file-meta" id="file-meta"></p>
+    </div>
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="pfill"></div></div>
+      <p class="progress-label" id="plabel">Subiendo...</p>
+    </div>
+    <button class="btn primary" id="up-btn" onclick="uploadImage()" style="display:none" disabled>
+      ↑ &nbsp;Subir imagen
+    </button>
+    <div id="upload-result"></div>
+  </div>
+
+  <div class="card" id="url-section">
+    <div class="card-label">
+      <span class="dot"></span>
+      URL fija para Blogger
+    </div>
+    <div class="url-display" id="fixed-url"></div>
+    <button class="btn" onclick="copyUrl()">Copiar URL</button>
+  </div>
+</div>
+
+<script>
+const FILE_PATH = 'portada_diaria.jpg';
+let selectedFile = null;
+let fileBase64 = '';
+let fixedUrl = '';
+let progTimer;
+
+function loadConfig(){
+  const u = localStorage.getItem('gh_user');
+  const r = localStorage.getItem('gh_repo');
+  const t = localStorage.getItem('gh_token');
+  if(u) document.getElementById('gh-user').value = u;
+  if(r) document.getElementById('gh-repo').value = r;
+  if(t) document.getElementById('gh-token').value = t;
+  if(u && r){
+    document.getElementById('saved-pill').style.display = 'inline';
+    setFixedUrl(u, r);
+  }
+}
+
+function saveConfig(){
+  const u = document.getElementById('gh-user').value.trim();
+  const r = document.getElementById('gh-repo').value.trim();
+  const t = document.getElementById('gh-token').value.trim();
+  if(!u||!r||!t){ showMsg('config-result','error','Rellena los tres campos'); return; }
+  localStorage.setItem('gh_user', u);
+  localStorage.setItem('gh_repo', r);
+  localStorage.setItem('gh_token', t);
+  document.getElementById('saved-pill').style.display = 'inline';
+  setFixedUrl(u, r);
+  showMsg('config-result','success','✓ Guardado');
+  checkReady();
+}
+
+function setFixedUrl(u, r){
+  fixedUrl = 'https://raw.githubusercontent.com/'+u+'/'+r+'/main/'+FILE_PATH;
+  document.getElementById('fixed-url').textContent = fixedUrl;
+  document.getElementById('url-section').style.display = '';
+}
+
+function checkReady(){
+  const u = document.getElementById('gh-user').value.trim();
+  const r = document.getElementById('gh-repo').value.trim();
+  const t = document.getElementById('gh-token').value.trim();
+  document.getElementById('up-btn').disabled = !(u && r && t && selectedFile);
+}
+
+function onFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  processFile(file);
+}
+
+function processFile(file){
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const data = ev.target.result;
+    fileBase64 = data.split(',')[1];
+    document.getElementById('preview').src = data;
+    document.getElementById('file-meta').textContent = file.name + ' · ' + Math.round(file.size/1024) + ' KB';
+    document.getElementById('preview-wrap').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('up-btn').style.display = 'flex';
+  document.getElementById('upload-result').innerHTML = '';
+  checkReady();
+}
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()=> dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{
+  e.preventDefault(); dz.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if(f && f.type.startsWith('image/')) processFile(f);
+});
+
+async function uploadImage(){
+  const user = document.getElementById('gh-user').value.trim();
+  const repo = document.getElementById('gh-repo').value.trim();
+  const token = document.getElementById('gh-token').value.trim();
+  if(!user||!repo||!token||!fileBase64){ showMsg('upload-result','error','Faltan datos o imagen'); return; }
+
+  const btn = document.getElementById('up-btn');
+  btn.disabled = true;
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('upload-result').innerHTML = '';
+  animateProgress();
+
+  const apiUrl = 'https://api.github.com/repos/'+user+'/'+repo+'/contents/'+FILE_PATH;
+  let sha = null;
+
+  try {
+    const check = await fetch(apiUrl, {
+      headers: { 'Authorization': 'token '+token, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if(check.ok){ const j = await check.json(); sha = j.sha; }
+  } catch(e){}
+
+  const body = {
+    message: 'Portada ' + new Date().toLocaleDateString('es-ES'),
+    content: fileBase64
+  };
+  if(sha) body.sha = sha;
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token '+token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    clearInterval(progTimer);
+    document.getElementById('pfill').style.width = '100%';
+    document.getElementById('progress-wrap').style.display = 'none';
+    btn.disabled = false;
+
+    if(res.ok){
+      setFixedUrl(user, repo);
+      showMsg('upload-result','success','✓ Imagen subida. El widget de Blogger ya está actualizado.');
+    } else {
+      const err = await res.json();
+      showMsg('upload-result','error', 'Error: ' + (err.message || res.status));
+    }
+  } catch(e){
+    clearInterval(progTimer);
+    document.getElementById('progress-wrap').style.display = 'none';
+    btn.disabled = false;
+    showMsg('upload-result','error','Error de red: '+e.message);
+  }
+}
+
+function animateProgress(){
+  let p = 0;
+  document.getElementById('pfill').style.width = '0%';
+  clearInterval(progTimer);
+  progTimer = setInterval(()=>{
+    p = Math.min(p + Math.random()*15, 85);
+    document.getElementById('pfill').style.width = p+'%';
+    document.getElementById('plabel').textContent = 'Subiendo... ' + Math.round(p) + '%';
+  }, 300);
+}
+
+function showMsg(id, type, msg){
+  document.getElementById(id).innerHTML =
+    '<div class="alert '+type+'"><span>'+msg+'</span></div>';
+}
+
+function copyUrl(){
+  navigator.clipboard.writeText(fixedUrl).then(()=>{
+    const btn = event.currentTarget;
+    btn.textContent = '✓  Copiado';
+    setTimeout(()=>{ btn.textContent = 'Copiar URL'; }, 2000);
+  });
+}
+
+loadConfig();
+</script>
+</body>
+</html>
